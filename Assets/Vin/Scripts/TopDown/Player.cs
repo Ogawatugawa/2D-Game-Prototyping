@@ -6,14 +6,15 @@ using Prime31;
 [RequireComponent(typeof(CharacterController2D))]
 public class Player : MonoBehaviour
 {
-
-    public CharacterController2D charC;
-    Rigidbody2D rigid;
+    [Header("Component Set Up")]
+    private CharacterController2D charC;
+    private Rigidbody2D rigid;
 
     [Header("Movement Variables")]
-    public float baseSpeed = 5f, moveSpeed;
-    public Vector3 motion;
-    public Vector2 direction;
+    public float baseSpeed = 5f;
+    public float moveSpeed;
+    public Vector2 motion;
+    public Vector2 direction = new Vector2(0,-1);
 
     [Header("Dash Variables")]
     public float dashSpeed;
@@ -24,24 +25,28 @@ public class Player : MonoBehaviour
     public float attackDamage= 20f;
     public float attackRadius = 0.8f;
     public float attackRange = 1.2f;
-    public GameObject arms;
+    public bool CanAttack = true;
+    public bool CanBeDamaged = true;
 
-    // Start is called before the first frame update
+    [Header("Animation")]
+    public Animator anim;
+    public SpriteRenderer rend;
+    
     void Start()
     {
+        rend = GetComponent<SpriteRenderer>();
+        anim = GetComponent<Animator>();
         charC = GetComponent<CharacterController2D>();
         dashTimer = maxDashTime;
         rigid = GetComponent<Rigidbody2D>();
-        arms = GameObject.Find("Arms");
     }
 
-    // Update is called once per frame
     void Update()
     {
         float inputH = Input.GetAxis("Horizontal");
         float inputV = Input.GetAxis("Vertical");
 
-        motion = new Vector3(inputH, inputV, 0);
+        motion = new Vector2(inputH, inputV);
 
         // If we are currently sensing any input
         if (Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0)
@@ -55,14 +60,19 @@ public class Player : MonoBehaviour
         // Multiply Motion by Move Speed
         motion.x *= moveSpeed;
         motion.y *= moveSpeed;
+
         // Run Dash() which will Dash if Left Shift is pressed
         Dash();
+
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Attack();
         }
+
+        Animate();
+
         // Move using Character Controller function
-        charC.Move(motion * Time.deltaTime);
+       charC.Move(motion * Time.deltaTime);
     }
 
     private void OnDrawGizmos()
@@ -85,7 +95,6 @@ public class Player : MonoBehaviour
                     enemy.TakeDamage(attackDamage);
                 }
             }
-            Mathf.Lerp(arms.transform.localEulerAngles.z, 90f, 1f);
         }
     }
 
@@ -125,6 +134,24 @@ public class Player : MonoBehaviour
         else
         {
             isDashing = false;
+        }
+    }
+
+    void Animate()
+    {
+        if (!(direction.x == 0 && direction.y == 0))
+        {
+            anim.SetFloat("Horizontal", direction.x);
+            anim.SetFloat("Vertical", direction.y);
+            anim.SetFloat("Motion", motion.magnitude);
+            if (direction.x < 0)
+            {
+                rend.flipX = true;
+            }
+            if (direction.x > 0)
+            {
+                rend.flipX = false;
+            } 
         }
     }
 }
